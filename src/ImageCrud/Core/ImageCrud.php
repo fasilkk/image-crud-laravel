@@ -53,6 +53,8 @@ class ImageCrud {
     protected $default_view_folder_path = null;
     protected $default_config_path = null;
 
+    protected $public_path = null;
+
 	function __construct() {
 
 	}
@@ -265,7 +267,6 @@ class ImageCrud {
 		$css_files =  $this->get_css_files();
 
 		return array('output' => $this->views_as_string, 'js_files' => $js_files, 'css_files' => $css_files);
-
 	}
 
 	protected function _upload_file($upload_dir) {
@@ -273,7 +274,7 @@ class ImageCrud {
 		$reg_exp = '/(\\.|\\/)(gif|jpeg|jpg|png)$/i';
 
 		$options = array(
-				'upload_dir' 		=> base_path().$upload_dir.'/',
+				'upload_dir' 		=> $this->public_path.$upload_dir.'/',
 				'param_name'		=> 'qqfile',
 				'upload_url'		=> base_url().$upload_dir.'/',
 				'accept_file_types' => $reg_exp
@@ -298,7 +299,7 @@ class ImageCrud {
 
 			$filename = $upload_response->name;
 
-			$path = base_path().$upload_dir.'/'.$filename;
+			$path = $this->public_path.$upload_dir.'/'.$filename;
 
 			/* Resizing to 1024 x 768 if its required */
 			list($width, $height) = getimagesize($path);
@@ -354,8 +355,16 @@ class ImageCrud {
 
     	$result = $sql_build->first();
 
-    	unlink( base_path().$this->image_path.'/'.$result->{$this->url_field} );
-    	unlink( base_path().$this->image_path.'/'.$this->thumbnail_prefix.$result->{$this->url_field} );
+        $image_file_path = $this->public_path.$this->image_path.'/'.$result->{$this->url_field};
+        $thumbnail_file_path = $this->public_path.$this->image_path.'/'.$this->thumbnail_prefix.$result->{$this->url_field};
+
+        if (file_exists($image_file_path)) {
+            unlink($image_file_path);
+        }
+
+        if (file_exists($thumbnail_file_path)) {
+            unlink($thumbnail_file_path);
+        }
 
     	$delete_sql = DB::table($this->table_name);
     	$delete_sql->where($this->primary_key,'=',$id);
@@ -386,7 +395,7 @@ class ImageCrud {
 
     	foreach($results as $num => $row)
     	{
-			if (!file_exists(base_path().$this->image_path.'/'.$this->thumbnail_prefix.$row->{$this->url_field})) {
+			if (!file_exists($this->public_path.$this->image_path.'/'.$this->thumbnail_prefix.$row->{$this->url_field})) {
 				$this->_create_thumbnail($this->image_path.'/'.$row->{$this->url_field}, $this->image_path.'/'.$this->thumbnail_prefix.$row->{$this->url_field});
 			}
 
@@ -411,9 +420,9 @@ class ImageCrud {
 	protected function _create_thumbnail($image_path, $thumbnail_path)
 	{
 		$imageMoo = new ImageMoo();
-		$imageMoo->load(base_path().$image_path)
+		$imageMoo->load($this->public_path.$image_path)
 			->resize_crop(90,60)
-			->save(base_path().$thumbnail_path,true);
+			->save($this->public_path.$thumbnail_path,true);
 
 	}
 
@@ -503,6 +512,8 @@ class ImageCrud {
         $this->default_language_path = __DIR__.'/../../../Resources/languages';
         $this->default_view_folder_path = __DIR__.'/../../../Resources//views/';
         $this->default_config_path =  __DIR__.'/../../../Resources/config/';
+
+        $this->public_path = public_path()."/";
     }
 
 	public function render()
@@ -545,7 +556,7 @@ class ImageCrud {
 				case 'upload_file':
 					if($this->unset_upload)
 					{
-						throw new Exception('This user is not allowed to do this operation', 1);
+						throw new \Exception('This user is not allowed to do this operation', 1);
 						die();
 					}
 
@@ -571,7 +582,7 @@ class ImageCrud {
 					@ob_end_clean();
 					if($this->unset_delete)
 					{
-						throw new Exception('This user is not allowed to do this operation', 1);
+						throw new \Exception('This user is not allowed to do this operation', 1);
 						die();
 					}
 					$id = $state_info->id;
@@ -601,11 +612,6 @@ class ImageCrud {
 function base_url()
 {
 	return str_replace( "index.php", "", URL::to('/') );
-}
-
-function base_path()
-{
-	return '../../';
 }
 
 function site_url($url = '')
