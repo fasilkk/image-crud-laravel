@@ -49,7 +49,9 @@ class ImageCrud {
 
 	protected $language = null;
 	protected $lang_strings = array();
-	protected $default_language_path = '../../assets/image_crud/private/languages';
+	protected $default_language_path = null;
+    protected $default_view_folder_path = null;
+    protected $default_config_path = null;
 
 	function __construct() {
 
@@ -159,17 +161,17 @@ class ImageCrud {
 		$ext = pathinfo($view, PATHINFO_EXTENSION);
 		$file = ($ext == '') ? $view.'.php' : $view;
 
-		$view_file = '../../assets/image_crud/private/views/';
+		$view_folder = $this->default_view_folder_path;
 
-		if (file_exists($view_file.$file))
+		if (file_exists($view_folder.$file))
 		{
-			$path = $view_file.$file;
+			$path = $view_folder.$file;
 			$file_exists = TRUE;
 		}
 
 		if ( ! $file_exists)
 		{
-			throw new \Exception('Unable to load the requested file: '.$view_file.$file, 16);
+			throw new \Exception('Unable to load the requested file: '.$view_folder.$file, 16);
 		}
 
 		extract($vars);
@@ -398,7 +400,7 @@ class ImageCrud {
 
 	protected function _convert_foreign_characters($str_i)
 	{
-		include('../../assets/image_crud/private/config/translit_chars.php');
+		include($this->default_config_path.'translit_chars.php');
 		if ( ! isset($translit_characters))
 		{
 			return $str_i;
@@ -496,8 +498,17 @@ class ImageCrud {
 		}
 	}
 
-	function render()
+    public function pre_render()
+    {
+        $this->default_language_path = __DIR__.'/../../../Resources/languages';
+        $this->default_view_folder_path = __DIR__.'/../../../Resources//views/';
+        $this->default_config_path =  __DIR__.'/../../../Resources/config/';
+    }
+
+	public function render()
 	{
+		$this->pre_render();
+		
 		$this->_load_language();
 
 		$state_info = $this->getState();

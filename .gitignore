@@ -1,6 +1,7 @@
 .buildpath
 .settings/
 .project
+.idea/
 laravel/
 system/
 application/.htaccess
