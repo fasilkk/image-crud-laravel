@@ -18,6 +18,6 @@ cd laravel
 composer update
 cd ../
 mkdir laravel/public/assets && mkdir laravel/public/assets/image_crud
-cp -rf assets/image_crud/public/* laravel/public/assets/image_crud/
+cp -rf assets/image_crud/* laravel/public/assets/image_crud/
 mkdir laravel/public/assets/uploads
 cp -rf assets/uploads/* laravel/public/assets/uploads/
